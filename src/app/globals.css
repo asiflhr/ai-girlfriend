@@ -1,26 +1,128 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Custom scrollbar for a sleek look */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+::-webkit-scrollbar-track {
+  background: var(--chat-bg-dark); /* Darker track */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+::-webkit-scrollbar-thumb {
+  background: var(--accent-orange-dark); /* User bubble color */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-orange);
+}
+
+html,
+body {
+  @apply h-full w-full overflow-hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Use the new chat-bg and primary text color */
+  @apply bg-[--color-chat-bg] text-[--color-text-primary] font-sans;
+}
+
+/* Background Pattern (subtle dots) */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: radial-gradient(
+    circle,
+    var(--color-chat-bg-pattern) 1px,
+    transparent 2px
+  );
+  background-size: 20px 20px;
+  opacity: 0.1; /* Subtle pattern */
+}
+
+/* @theme block: All your custom Tailwind v4 configurations live here */
+@theme {
+  /* New Color Palette (inspired by screenshot) */
+  --color-chat-bg: #1a1a1a; /* Main dark background */
+  --color-chat-bg-dark: #121212; /* Even darker for some elements */
+  --color-chat-bg-pattern: #333333; /* For the subtle dot pattern */
+
+  --color-user-bubble: #ff9800; /* Vibrant orange for user messages */
+  --color-ai-bubble: #2a2a2a; /* Dark grey for AI messages */
+
+  --color-text-primary: #ffffff; /* White for main text */
+  --color-text-secondary: #b0b0b0; /* Lighter grey for secondary text (timestamps, etc.) */
+  --color-text-placeholder: #666666; /* For input placeholders */
+  --color-icon-light: #b0b0b0; /* For icons that are light grey */
+  --color-icon-dark: #666666; /* For darker, subtle icons */
+
+  --color-border-subtle: #3a3a3a; /* Subtle borders */
+
+  /* Aliases for convenience in components if preferred, but direct use is fine */
+  --color-accent-orange: var(--color-user-bubble);
+  --color-accent-orange-dark: #e68a00; /* A slightly darker shade for contrast/hover */
+
+  /* Font family definition */
+  --font-sans: 'Inter var', sans-serif; /* Or any modern sans-serif font you prefer */
+
+  /* Keyframes for animations, defined directly within @theme */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 5px rgba(255, 152, 0, 0.4); /* Use new orange color for glow */
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
+    }
+  }
+
+  @keyframes dot-blink {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  /* Map keyframes to animation utilities */
+  --animation-fade-in-up: fade-in-up 0.5s ease-out forwards;
+  --animation-pulse-glow: pulse-glow 2s infinite ease-in-out;
+  --animation-dot-blink: dot-blink 1.4s infinite linear both;
+  --animation-blob: blob 7s infinite ease-in-out;
 }
