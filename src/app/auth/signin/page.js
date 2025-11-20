@@ -4,10 +4,16 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
+  const [interests, setInterests] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -20,6 +26,10 @@ export default function SignIn() {
       const result = await signIn('credentials', {
         email,
         name,
+        password,
+        age,
+        gender,
+        interests,
         isSignUp: isSignUp.toString(),
         redirect: false,
       })
@@ -59,23 +69,76 @@ export default function SignIn() {
             />
           </div>
 
+          <div className='relative'>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder='Password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className='w-full p-3 pr-12 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
+            />
+            <button
+              type='button'
+              onClick={() => setShowPassword(!showPassword)}
+              className='absolute right-3 top-1/2 transform -translate-y-1/2 text-[--color-text-secondary] hover:text-[--color-text-primary]'
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
           {isSignUp && (
-            <div>
-              <input
-                type='text'
-                placeholder='Name'
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className='w-full p-3 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
-              />
-            </div>
+            <>
+              <div>
+                <input
+                  type='text'
+                  placeholder='Name'
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className='w-full p-3 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
+                />
+              </div>
+              <div>
+                <input
+                  type='number'
+                  placeholder='Age (18+)'
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  required
+                  min='18'
+                  className='w-full p-3 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
+                />
+              </div>
+              <div>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  required
+                  className='w-full p-3 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
+                >
+                  <option value=''>Select Gender</option>
+                  <option value='male'>Male</option>
+                  <option value='female'>Female</option>
+                  <option value='other'>Other</option>
+                </select>
+              </div>
+              <div>
+                <input
+                  type='text'
+                  placeholder='Interests (comma separated)'
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                  className='w-full p-3 bg-[--color-ai-bubble] text-[--color-text-primary] rounded-lg border border-[--color-border-subtle] focus:outline-none focus:border-[--color-user-bubble]'
+                />
+              </div>
+            </>
           )}
 
           <button
             type='submit'
             disabled={loading}
-            className='w-full p-3 bg-[--color-user-bubble] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50'
+            className='w-full p-3 bg-orange-500 text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50'
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
@@ -85,7 +148,7 @@ export default function SignIn() {
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className='text-[--color-user-bubble] hover:underline'
+            className='text-orange-500 hover:underline'
           >
             {isSignUp ? 'Sign In' : 'Sign Up'}
           </button>

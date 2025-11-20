@@ -15,6 +15,7 @@ import {
   MessageCircle,
   User,
   LogOut,
+  Settings,
 } from 'lucide-react'
 import ChatBubble from './components/ChatBubble'
 import TypingDots from './components/TypingDots'
@@ -49,6 +50,12 @@ export default function Home() {
       loadChats()
     }
   }, [session])
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }, [messages])
 
   const loadChats = async () => {
     try {
@@ -127,6 +134,39 @@ export default function Home() {
     return ''
   }
 
+  const handleRenameChat = async (chatId, newTitle) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle })
+      })
+      if (response.ok) {
+        loadChats()
+      }
+    } catch (error) {
+      console.error('Failed to rename chat:', error)
+    }
+  }
+
+  const handleDeleteChat = async (chatId) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'DELETE'
+      })
+      if (response.ok) {
+        loadChats()
+        if (currentChatId === chatId) {
+          setCurrentChatId(null)
+          setMessages([])
+          setChatSummary('')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
+    }
+  }
+
   if (status === 'loading') {
     return (
       <div className='min-h-screen flex items-center justify-center bg-[--color-chat-bg]'>
@@ -139,11 +179,7 @@ export default function Home() {
     return null
   }
 
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
-    }
-  }, [messages])
+
 
   const sendMessage = async (messageText) => {
     if (!messageText.trim()) return
@@ -236,9 +272,9 @@ export default function Home() {
   }
 
   return (
-    <main className='relative flex flex-col items-center justify-between min-h-screen p-4 overflow-hidden'>
-      {/* Background Gradient & Blob Animations (kept from previous design, adapt colors) */}
-      <div className='absolute inset-0 z-0 overflow-hidden'>
+    <main className='relative flex h-screen overflow-hidden bg-[--color-chat-bg]'>
+      {/* Background Gradient & Blob Animations */}
+      <div className='absolute inset-0 z-0 overflow-hidden pointer-events-none'>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -259,24 +295,34 @@ export default function Home() {
         ></motion.div>
       </div>
 
-      {/* Main Chat Interface - Phone Mockup (using a simple styled div for now) */}
-      <motion.div
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
-        className='relative z-10 w-full max-w-sm md:max-w-lg lg:max-w-xl h-[90vh] bg-[--color-chat-bg-dark] rounded-3xl shadow-2xl overflow-hidden
-                   border-[10px] border-black ring-[1px] ring-gray-700
-                   flex flex-col' // Added flex-col for internal layout
-      >
+      {/* Desktop Sidebar */}
+      <div className='hidden md:flex w-80 flex-col border-r border-[--color-border-subtle] bg-[--color-chat-bg-dark] z-20'>
+        <ChatHistory
+          chats={chats}
+          currentChatId={currentChatId}
+          onChatSelect={loadChat}
+          onNewChat={createNewChat}
+          isOpen={true}
+          isSidebar={true}
+          onRename={handleRenameChat}
+          onDelete={handleDeleteChat}
+        />
+      </div>
+
+      {/* Main Chat Interface */}
+      <div className='flex-1 flex flex-col relative z-10 h-full'>
         {/* Header */}
         <div className='flex items-center justify-between p-4 bg-[--color-ai-bubble] border-b border-[--color-border-subtle] text-ai-bubble'>
-          <button onClick={() => setShowChatHistory(true)}>
-            <MessageCircle size={24} className='text-[--color-icon-light]' />
+          <button 
+            onClick={() => setShowChatHistory(true)}
+            className='md:hidden text-[--color-icon-light] hover:text-white transition-colors'
+          >
+            <MessageCircle size={24} />
           </button>
           <div className='flex-1 text-center'>
             <button 
               onClick={() => setShowPersonaSelector(true)}
-              className='flex items-center justify-center space-x-2 mx-auto'
+              className='flex items-center justify-center space-x-2 mx-auto hover:opacity-80 transition-opacity'
             >
               <span className='text-xl'>{personas[currentPersona]?.avatar}</span>
               <div>
@@ -285,9 +331,14 @@ export default function Home() {
               </div>
             </button>
           </div>
-          <button onClick={() => signOut()}>
-            <LogOut size={24} className='text-[--color-icon-light]' />
-          </button>
+          <div className='flex items-center gap-3'>
+            <button onClick={() => router.push('/profile')} className='text-[--color-icon-light] hover:text-white transition-colors'>
+              <Settings size={24} />
+            </button>
+            <button onClick={() => signOut()} className='text-[--color-icon-light] hover:text-white transition-colors'>
+              <LogOut size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages Container */}
@@ -319,31 +370,30 @@ export default function Home() {
         </div>
 
         {/* Input Area */}
-        <div className='flex items-center p-3 bg-[--color-chat-bg-dark] border-t border-[--color-border-subtle]'>
-          <Paperclip
-            size={24}
-            className='text-[--color-icon-light] mr-2 cursor-pointer'
-          />
-          <input
-            type='text'
-            value={inputMessage}
-            onChange={handleTextInputChange}
-            onKeyDown={handleKeyPress}
-            placeholder='Type message...'
-            className='flex-1 bg-transparent text-[--color-text-primary] placeholder-[--color-text-placeholder] border-none outline-none text-base px-2 py-2'
-          />
-          <Smile
-            size={24}
-            className='text-[--color-icon-light] ml-2 cursor-pointer'
-          />
+        <div className='flex items-center p-4 bg-[--color-chat-bg-dark] border-t border-[--color-border-subtle]'>
+          <button className='text-[--color-icon-light] hover:text-white mr-3 transition-colors'>
+            <Paperclip size={24} />
+          </button>
+          <div className='flex-1 relative'>
+            <input
+              type='text'
+              value={inputMessage}
+              onChange={handleTextInputChange}
+              onKeyDown={handleKeyPress}
+              placeholder='Type a message...'
+              className='w-full bg-[--color-chat-bg] text-[--color-text-primary] placeholder-[--color-text-placeholder] rounded-full px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-[--color-user-bubble] transition-all'
+            />
+            <button className='absolute right-3 top-1/2 -translate-y-1/2 text-[--color-icon-light] hover:text-white transition-colors'>
+              <Smile size={24} />
+            </button>
+          </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSendButtonClick}
-            className='p-2 ml-2 bg-user-bubble text-[--color-text-primary] rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+            className='p-3 ml-3 bg-[--color-user-bubble] text-white rounded-full shadow-lg hover:shadow-orange-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed'
             disabled={!inputMessage.trim() || isLoadingGemini}
             aria-label='Send message'
-            title='Send message'
           >
             {isLoadingGemini ? (
               <Loader2 size={20} className='animate-spin' />
@@ -352,7 +402,7 @@ export default function Home() {
             )}
           </motion.button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Hidden Audio Player */}
       <audio ref={audioRef} className='hidden' />
@@ -368,13 +418,16 @@ export default function Home() {
         )}
       </AnimatePresence>
       
-      {/* Chat History Modal */}
+      {/* Mobile Chat History Modal */}
       <ChatHistory
         chats={chats}
+        currentChatId={currentChatId}
         onChatSelect={loadChat}
         onNewChat={createNewChat}
         onClose={() => setShowChatHistory(false)}
         isOpen={showChatHistory}
+        onRename={handleRenameChat}
+        onDelete={handleDeleteChat}
       />
     </main>
   )
